@@ -1,0 +1,342 @@
+{
+  "name": "Customer support service",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e0013b85-c7e1-44b7-b51e-0ea62ff5a5ab",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0Fp3LYLN6umWFBI3",
+          "name": "main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.subject }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "customer support service",
+              "description": "An email that is related to helping out a customer. They may be asking questions  about our polices or questions about our product or services"
+            },
+            {
+              "category": "other ",
+              "description": "An email which is not related to customer support"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        16
+      ],
+      "id": "e26541dc-6f4e-4e00-8b8f-cb60e0ee6387",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": "openai/chatgpt-4o-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        144,
+        208
+      ],
+      "id": "41b105bf-4e97-4071-b520-92324d8e90f1",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "vZh1Zq1BTliiVXBC",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        368,
+        256
+      ],
+      "id": "4f06c4d6-8e07-4a70-84d5-1cc5ef410429",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.subject }}",
+        "options": {
+          "systemMessage": "=# overview\nyou are a customer support agent for Sajju solutions.Your job is to resond to incoming emails with relevant information using your knowledgeBase tool.\n\n##Instructions\n - Your outut should be friendly and use emojis\n- Sign off as Mr. Helpful from Sajju solutions \n\n##Output\n- Output the subject,body content of the email"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        -96
+      ],
+      "id": "d8ca69e0-b327-4077-9645-90629cd0df12",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        576,
+        144
+      ],
+      "id": "a3c2b8b8-a4a6-4af2-ac9e-0e205bbf9252",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "vZh1Zq1BTliiVXBC",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Call this to access privacy and FAQ information",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "hero",
+          "mode": "list",
+          "cachedResultName": "hero"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        832,
+        160
+      ],
+      "id": "93222c0c-f715-4f67-82ef-5b7f4886d4d6",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "7JSxC2WKQyVxIapt",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        928,
+        368
+      ],
+      "id": "d7de8ee7-dca4-4c05-ba46-414f1a0a485d",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "obPamatlWpY8Wv5f",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        912,
+        -96
+      ],
+      "id": "d69c2e7b-842b-47a0-8c6e-e018d6573c1b",
+      "name": "Reply to a message",
+      "webhookId": "744d5ed2-212a-44c8-b11b-e60217938935",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "0Fp3LYLN6umWFBI3",
+          "name": "main"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "19a11f2f7ed526a7",
+          "threadId": "19a11f2ecfc69792",
+          "labelIds": [
+            "UNREAD",
+            "IMPORTANT",
+            "SENT",
+            "INBOX"
+          ],
+          "sizeEstimate": 619,
+          "headers": {
+            "mime-version": "MIME-Version: 1.0",
+            "date": "Date: Thu, 23 Oct 2025 22:12:05 +0530",
+            "message-id": "Message-ID: <CAP3k0F8Cj0ue4L-2+QhFv0gHUkPOZqane5i4oQZHb0NfuJCdbw@mail.gmail.com>",
+            "subject": "Subject: Tell me about privacy and policy.. I'm concerned about my data and my\r\n password ",
+            "from": "From: \"Syed Sajju.99\" <syedsajju48@gmail.com>",
+            "to": "To: \"Syed Sajju.99\" <syedsajju48@gmail.com>",
+            "content-type": "Content-Type: multipart/alternative; boundary=\"00000000000018a1360641d61df2\""
+          },
+          "html": "<div dir=\"auto\"></div>\n",
+          "text": "\n",
+          "textAsHtml": "<p></p>",
+          "subject": "Tell me about privacy and policy.. I'm concerned about my data and my password",
+          "date": "2025-10-23T16:42:05.000Z",
+          "to": {
+            "value": [
+              {
+                "address": "syedsajju48@gmail.com",
+                "name": "Syed Sajju.99"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Syed Sajju.99</span> &lt;<a href=\"mailto:syedsajju48@gmail.com\" class=\"mp_address_email\">syedsajju48@gmail.com</a>&gt;</span>",
+            "text": "\"Syed Sajju.99\" <syedsajju48@gmail.com>"
+          },
+          "from": {
+            "value": [
+              {
+                "address": "syedsajju48@gmail.com",
+                "name": "Syed Sajju.99"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Syed Sajju.99</span> &lt;<a href=\"mailto:syedsajju48@gmail.com\" class=\"mp_address_email\">syedsajju48@gmail.com</a>&gt;</span>",
+            "text": "\"Syed Sajju.99\" <syedsajju48@gmail.com>"
+          },
+          "messageId": "<CAP3k0F8Cj0ue4L-2+QhFv0gHUkPOZqane5i4oQZHb0NfuJCdbw@mail.gmail.com>"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7c999cbe-3f35-49f3-8a07-33a690ba7adf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8adf89c7e0c9be798e0f3cd513ac44d74c7a1077d9dc60f96a51c3fca8cda03f"
+  },
+  "id": "4s2Rv6Klo1FrWBBP",
+  "tags": []
+}
